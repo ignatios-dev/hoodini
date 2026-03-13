@@ -1,0 +1,22 @@
+#!/bin/bash
+# Copy to deploy.sh and fill in your credentials
+set -e
+SUPABASE_URL="YOUR_SUPABASE_URL"
+SUPABASE_ANON_KEY="YOUR_SUPABASE_ANON_KEY"
+VERCEL="$HOME/.local/node_modules/.bin/vercel"
+PROD_DOMAIN="hoodini.vercel.app"
+
+echo "▶ Building Flutter web..."
+flutter build web \
+  --dart-define=SUPABASE_URL="$SUPABASE_URL" \
+  --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY" \
+  --no-tree-shake-icons
+
+echo "▶ Copying to Vercel output..."
+cp -r build/web/. .vercel/output/static/
+
+echo "▶ Deploying..."
+DEPLOYMENT=$($VERCEL deploy --prebuilt --yes 2>&1 | grep -oP 'hoodini-[a-z0-9]+-ignatios[^\s]+\.app' | head -1)
+$VERCEL alias set "$DEPLOYMENT" "$PROD_DOMAIN"
+
+echo "✓ Live at https://$PROD_DOMAIN"

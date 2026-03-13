@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hoodini – Mark Your Hood</title>
+  <meta name="description" content="Hoodini – Die Geo-Marker App für deinen Hood. Für Freunde, für Community, gegen Rechts." />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold: #FFD700;
+      --neon: #39FF14;
+      --bg: #0D0D0D;
+      --surface: #161616;
+      --surface2: #1E1E1E;
+      --text: #F0F0F0;
+      --muted: #888;
+      --red: #FF4444;
+      --red-bg: #1A0000;
+      --red-border: #CC0000;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 50% 0%, rgba(255,215,0,0.07) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 40% at 80% 80%, rgba(57,255,20,0.04) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    /* ── LOGO SVG ── */
+    .logo-wrap {
+      margin-bottom: 40px;
+      filter: drop-shadow(0 0 32px rgba(255,215,0,0.3));
+    }
+
+    .logo-wrap img {
+      width: 200px;
+      height: auto;
+      display: block;
+    }
+
+    /* ── HEADLINE ── */
+    .hero h1 {
+      font-size: clamp(2.8rem, 8vw, 5rem);
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      font-family: 'Courier New', monospace;
+      background: linear-gradient(135deg, var(--gold) 0%, #FFA500 50%, var(--gold) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-align: center;
+      line-height: 1;
+    }
+
+    .hero .tagline {
+      margin-top: 16px;
+      font-size: clamp(0.85rem, 2.5vw, 1rem);
+      font-family: 'Courier New', monospace;
+      color: var(--neon);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      text-align: center;
+      opacity: 0.85;
+    }
+
+    .hero .sub {
+      margin-top: 20px;
+      max-width: 520px;
+      text-align: center;
+      font-size: 1.05rem;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .cta-row {
+      margin-top: 40px;
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 16px 36px;
+      background: var(--gold);
+      color: #000;
+      font-family: 'Courier New', monospace;
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: 2px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 0 0 rgba(255,215,0,0);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(255,215,0,0.35);
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 16px 36px;
+      background: transparent;
+      color: var(--text);
+      font-family: 'Courier New', monospace;
+      font-size: 1rem;
+      letter-spacing: 1px;
+      border: 1px solid #333;
+      border-radius: 6px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+
+    /* ── SCROLL HINT ── */
+    .scroll-hint {
+      position: absolute;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: var(--muted);
+      font-size: 0.75rem;
+      font-family: 'Courier New', monospace;
+      letter-spacing: 2px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50%       { transform: translateX(-50%) translateY(6px); }
+    }
+
+    /* ── FEATURES ── */
+    .features {
+      padding: 80px 24px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .section-label {
+      font-family: 'Courier New', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 4px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 48px;
+      text-align: center;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 640px) {
+      .feature-grid { grid-template-columns: 1fr; }
+    }
+
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid #222;
+      border-radius: 16px;
+      padding: 36px 32px;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-4px);
+      border-color: #333;
+    }
+
+    .feature-card.gold { border-color: rgba(255,215,0,0.2); }
+    .feature-card.gold:hover { border-color: rgba(255,215,0,0.5); }
+    .feature-card.red  { border-color: var(--red-border); background: var(--red-bg); }
+    .feature-card.red:hover  { border-color: var(--red); }
+
+    .feature-icon {
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+      display: block;
+    }
+
+    .feature-card h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      font-family: 'Courier New', monospace;
+      margin-bottom: 12px;
+    }
+
+    .feature-card.gold h2 { color: var(--gold); }
+    .feature-card.red  h2 { color: var(--red); }
+
+    .feature-card p {
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.7;
+    }
+
+    .feature-card ul {
+      list-style: none;
+      margin-top: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .feature-card ul li {
+      color: #aaa;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .feature-card ul li::before {
+      content: '▸';
+      color: var(--gold);
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .feature-card.red ul li::before { color: var(--red); }
+
+    /* ── HOW IT WORKS ── */
+    .how {
+      padding: 80px 24px;
+      max-width: 700px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin-top: 48px;
+      text-align: left;
+    }
+
+    .step {
+      display: flex;
+      gap: 24px;
+      padding: 24px 0;
+      border-bottom: 1px solid #1a1a1a;
+    }
+
+    .step:last-child { border-bottom: none; }
+
+    .step-num {
+      font-family: 'Courier New', monospace;
+      font-size: 2rem;
+      font-weight: 900;
+      color: #222;
+      flex-shrink: 0;
+      width: 48px;
+      line-height: 1;
+      padding-top: 4px;
+    }
+
+    .step h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--gold);
+      font-family: 'Courier New', monospace;
+      margin-bottom: 4px;
+    }
+
+    .step p {
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    /* ── COMMUNITY BANNER ── */
+    .community {
+      margin: 0 auto 80px;
+      max-width: 700px;
+      padding: 0 24px;
+    }
+
+    .community-card {
+      background: var(--red-bg);
+      border: 1.5px solid var(--red-border);
+      border-radius: 16px;
+      padding: 40px 36px;
+    }
+
+    .community-card .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(204,0,0,0.15);
+      border: 1px solid var(--red-border);
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 2px;
+      color: var(--red);
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+
+    .community-card h2 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      font-family: 'Courier New', monospace;
+      color: var(--red);
+      margin-bottom: 12px;
+    }
+
+    .community-card p {
+      color: #aaa;
+      line-height: 1.75;
+      font-size: 0.97rem;
+    }
+
+    .community-card .note {
+      margin-top: 20px;
+      font-size: 0.8rem;
+      color: #555;
+      font-family: 'Courier New', monospace;
+      letter-spacing: 1px;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid #1a1a1a;
+      padding: 40px 24px;
+      text-align: center;
+      color: #444;
+      font-size: 0.8rem;
+      font-family: 'Courier New', monospace;
+    }
+
+    footer span { color: var(--gold); }
+  </style>
+</head>
+<body>
+
+  <!-- ── HERO ── -->
+  <section class="hero">
+    <div class="logo-wrap">
+      <img src="/landing/logo.png" alt="Hoodini Logo" />
+    </div>
+
+    <h1>HOODINI</h1>
+    <p class="tagline">// mark your hood. own the streets. //</p>
+    <p class="sub">
+      Eine Geo-Marker App für Freunde — und eine Plattform für Community-Aktivismus.
+      Hinterlasse Nachrichten, teile Orte, und melde rechtsextreme Symbole in deiner Umgebung.
+    </p>
+
+    <div class="cta-row">
+      <a href="/" class="btn-primary">[ ENTER THE HOOD ]&nbsp;→</a>
+      <a href="#features" class="btn-secondary">Mehr erfahren</a>
+    </div>
+
+    <div class="scroll-hint">
+      <span>↓</span>
+      <span>SCROLL</span>
+    </div>
+  </section>
+
+  <!-- ── FEATURES ── -->
+  <section class="features" id="features">
+    <p class="section-label">// Was kann Hoodini //</p>
+    <div class="feature-grid">
+
+      <!-- Friends card -->
+      <div class="feature-card gold">
+        <span class="feature-icon">📍</span>
+        <h2>Für deine Crew</h2>
+        <p>Erstelle Lobbies für deine Freunde und teilt Geo-Marker auf einer gemeinsamen Karte.</p>
+        <ul>
+          <li>Geheime Spots, Treffpunkte &amp; Nachrichten hinterlassen</li>
+          <li>Bilder direkt am Marker anheften</li>
+          <li>Echtzeit-Sync – alle sehen das Gleiche</li>
+          <li>Lobby per Link teilen, sofort beitreten</li>
+          <li>XP sammeln und legendäre Marker-Pins freischalten</li>
+        </ul>
+      </div>
+
+      <!-- Community card -->
+      <div class="feature-card red">
+        <span class="feature-icon">🚨</span>
+        <h2>Gegen Rechts</h2>
+        <p>Die Community-Lobby ist immer sichtbar – egal wo du bist. Kein Account nötig, kein Aufwand.</p>
+        <ul>
+          <li>Rechtsextreme Graffitis &amp; Sticker dokumentieren</li>
+          <li>Standort, Foto und Beschreibung direkt pinnen</li>
+          <li>Sichtbar für alle Hoodini-Nutzer in der Nähe</li>
+          <li>Gemeinsam ein Bild der Lage vor Ort schaffen</li>
+          <li>Für Initiativen, Schulen &amp; Engagierte</li>
+        </ul>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── HOW IT WORKS ── -->
+  <section class="how">
+    <p class="section-label">// So funktioniert's //</p>
+    <div class="steps">
+      <div class="step">
+        <span class="step-num">01</span>
+        <div>
+          <h3>Alias wählen</h3>
+          <p>Kein Passwort, keine E-Mail nötig. Einfach einen Alias eingeben und loslegen.</p>
+        </div>
+      </div>
+      <div class="step">
+        <span class="step-num">02</span>
+        <div>
+          <h3>Lobby beitreten oder erstellen</h3>
+          <p>Erstelle eine Lobby für deine Stadt, deinen Kiez oder deine Freunde – oder tritt der globalen Community-Lobby bei.</p>
+        </div>
+      </div>
+      <div class="step">
+        <span class="step-num">03</span>
+        <div>
+          <h3>Karte erkunden &amp; Marker setzen</h3>
+          <p>Lang drücken auf der Karte setzt einen Marker. Mit Text, Foto und Tags.</p>
+        </div>
+      </div>
+      <div class="step">
+        <span class="step-num">04</span>
+        <div>
+          <h3>Crew einladen</h3>
+          <p>Lobby-Link kopieren, verschicken, fertig. Alle sehen die gleichen Marker in Echtzeit.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── COMMUNITY SECTION ── -->
+  <section class="community">
+    <div class="community-card">
+      <div class="badge">🚨 COMMUNITY LOBBY</div>
+      <h2>Rechtsextreme Symbole melden</h2>
+      <p>
+        Hakenkreuze, NS-Parolen, rechte Sticker — dokumentiere sie, bevor sie verschwinden.
+        Unsere offene Community-Lobby ist für alle sichtbar und dient als kollektives Gedächtnis
+        gegen rechtsextreme Symbolik im öffentlichen Raum.
+      </p>
+      <p style="margin-top:12px;">
+        Kein komplizierter Meldeprozess. Einfach die App öffnen, Foto machen, Ort pinnen.
+        Gemeinsam schaffen wir Transparenz – für eine offene Gesellschaft.
+      </p>
+      <p class="note">// Inhalte werden von der Community moderiert. Missbrauch wird entfernt. //</p>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ── -->
+  <footer>
+    <p><span>HOODINI</span> &nbsp;·&nbsp; mark your hood &nbsp;·&nbsp; <a href="/" style="color:var(--gold); text-decoration:none;">App starten →</a></p>
+    <p style="margin-top:8px; color:#333;">Open source &nbsp;·&nbsp; Built with Flutter &amp; Supabase</p>
+  </footer>
+
+</body>
+</html>

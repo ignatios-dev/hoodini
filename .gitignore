@@ -1,0 +1,47 @@
+# Flutter/Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+*.iml
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# iOS
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Runner/GeneratedPluginRegistrant.*
+
+# Android
+android/.gradle/
+android/captures/
+android/gradlew
+android/gradlew.bat
+android/local.properties
+android/GeneratedPluginRegistrant.java
+**/android/**/gradle-wrapper.jar
+
+# Vercel (static output contains built artifacts with baked-in secrets)
+.vercel/output/static/
+
+# Environment / secrets
+.env
+.env.local
+.env.*.local
+
+# Build scripts with credentials (use .example versions)
+run_dev.sh
+deploy.sh
+
+# macOS
+.DS_Store

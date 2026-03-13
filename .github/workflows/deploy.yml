@@ -1,0 +1,38 @@
+name: Build & Deploy to Vercel
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.7'
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build web
+        run: |
+          flutter build web \
+            --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
+            --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }} \
+            --no-tree-shake-icons
+
+      - name: Copy build to Vercel output
+        run: cp -r build/web/. .vercel/output/static/
+
+      - name: Deploy to Vercel
+        run: |
+          npm install -g vercel@latest
+          DEPLOYMENT=$(vercel deploy --prebuilt --yes --token=${{ secrets.VERCEL_TOKEN }} 2>&1 | tail -1)
+          echo "Deployed to: $DEPLOYMENT"
+          vercel alias set "$DEPLOYMENT" hoodini.vercel.app --token=${{ secrets.VERCEL_TOKEN }}
