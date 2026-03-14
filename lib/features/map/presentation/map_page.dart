@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -48,9 +49,23 @@ class MapPage extends ConsumerStatefulWidget {
   ConsumerState<MapPage> createState() => _MapPageState();
 }
 
+double _distKm(double lat1, double lng1, double lat2, double lng2) {
+  return const Distance().as(
+    LengthUnit.Kilometer,
+    LatLng(lat1, lng1),
+    LatLng(lat2, lng2),
+  );
+}
+
+String _distLabel(double km) {
+  if (km < 1) return '${(km * 1000).round()} m';
+  return '${km.toStringAsFixed(1)} km';
+}
+
 class _MapPageState extends ConsumerState<MapPage> {
   final _mapController = MapController();
   bool _showTrails = false;
+  bool _showList = false;
 
   @override
   void dispose() {
@@ -112,6 +127,14 @@ class _MapPageState extends ConsumerState<MapPage> {
         return Scaffold(
           body: Stack(
             children: [
+              if (_showList)
+                _MarkerListBody(
+                  userLat: location.lat,
+                  userLng: location.lng,
+                  onShowMarker: _showMarkerDetail,
+                  onAddMarker: _showCreateMarkerSheet,
+                )
+              else
               FlutterMap(
                 mapController: _mapController,
                 options: MapOptions(
@@ -241,6 +264,29 @@ class _MapPageState extends ConsumerState<MapPage> {
                           label: lobby?.name ?? '',
                         ),
                         const Spacer(),
+                        GestureDetector(
+                          onTap: () => setState(() => _showList = !_showList),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: _showList
+                                  ? theme.colorScheme.primary
+                                  : Colors.black.withValues(alpha: 0.65),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: _showList
+                                    ? theme.colorScheme.primary
+                                    : Colors.white24,
+                              ),
+                            ),
+                            child: Icon(
+                              _showList ? Icons.map_outlined : Icons.list,
+                              size: 16,
+                              color: _showList ? Colors.black : Colors.white,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
                         _HoodChip(
                           icon: Icons.person,
                           label:
@@ -406,6 +452,326 @@ class _MapPageState extends ConsumerState<MapPage> {
           ),
         );
       },
+    );
+  }
+}
+
+// ── LIST VIEW ─────────────────────────────────────────────────────────────────
+
+class _MarkerListBody extends ConsumerStatefulWidget {
+  const _MarkerListBody({
+    required this.userLat,
+    required this.userLng,
+    required this.onShowMarker,
+    required this.onAddMarker,
+  });
+  final double userLat;
+  final double userLng;
+  final void Function(MapMarker) onShowMarker;
+  final void Function(LatLng) onAddMarker;
+
+  @override
+  ConsumerState<_MarkerListBody> createState() => _MarkerListBodyState();
+}
+
+class _MarkerListBodyState extends ConsumerState<_MarkerListBody> {
+  // null = show all
+  double? _radiusKm = 5.0;
+
+  static const _options = <(String, double?)>[
+    ('500m', 0.5),
+    ('1km', 1.0),
+    ('2km', 2.0),
+    ('5km', 5.0),
+    ('10km', 10.0),
+    ('Alle', null),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final markersAsync = ref.watch(markerNotifierProvider);
+    final allMarkers = markersAsync.valueOrNull ?? [];
+
+    final filtered = allMarkers.where((m) {
+      if (_radiusKm == null) return true;
+      return _distKm(widget.userLat, widget.userLng, m.lat, m.lng) <= _radiusKm!;
+    }).toList()
+      ..sort((a, b) {
+        final da = _distKm(widget.userLat, widget.userLng, a.lat, a.lng);
+        final db = _distKm(widget.userLat, widget.userLng, b.lat, b.lng);
+        return da.compareTo(db);
+      });
+
+    return Column(
+      children: [
+        // Radius filter bar
+        Container(
+          color: const Color(0xFF161616),
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                Text(
+                  'RADIUS:',
+                  style: TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 10,
+                    letterSpacing: 2,
+                    color: cs.onSurface.withValues(alpha: 0.4),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                ..._options.map((opt) {
+                  final (label, km) = opt;
+                  final active = _radiusKm == km;
+                  return GestureDetector(
+                    onTap: () => setState(() => _radiusKm = km),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      margin: const EdgeInsets.only(right: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: active ? cs.primary : cs.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: active ? cs.primary : Colors.white12,
+                        ),
+                      ),
+                      child: Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontFamily: 'monospace',
+                          fontWeight: FontWeight.bold,
+                          color: active ? Colors.black : cs.onSurface.withValues(alpha: 0.7),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+        ),
+
+        // Count bar
+        Container(
+          color: const Color(0xFF0D0D0D),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          child: Row(
+            children: [
+              Text(
+                '${filtered.length} MARKER',
+                style: TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 10,
+                  letterSpacing: 2,
+                  color: cs.primary.withValues(alpha: 0.8),
+                ),
+              ),
+              const Spacer(),
+              if (markersAsync.isLoading)
+                SizedBox(
+                  width: 10, height: 10,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 1.5,
+                    color: cs.primary,
+                  ),
+                ),
+            ],
+          ),
+        ),
+
+        // List
+        Expanded(
+          child: filtered.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('// nothing here yet //',
+                          style: TextStyle(
+                            fontFamily: 'monospace',
+                            color: cs.onSurface.withValues(alpha: 0.3),
+                            fontSize: 13,
+                          )),
+                      const SizedBox(height: 8),
+                      Text(
+                        _radiusKm != null
+                            ? 'try a wider radius'
+                            : 'be the first to drop a marker',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: cs.onSurface.withValues(alpha: 0.2),
+                          fontFamily: 'monospace',
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : RefreshIndicator(
+                  onRefresh: () async =>
+                      ref.invalidate(markerNotifierProvider),
+                  child: ListView.separated(
+                    padding: const EdgeInsets.only(bottom: 100),
+                    itemCount: filtered.length,
+                    separatorBuilder: (_, __) => Divider(
+                      height: 1,
+                      color: Colors.white.withValues(alpha: 0.05),
+                    ),
+                    itemBuilder: (ctx, i) {
+                      final m = filtered[i];
+                      final dist = _distKm(
+                          widget.userLat, widget.userLng, m.lat, m.lng);
+                      return _MarkerListTile(
+                        marker: m,
+                        distanceKm: dist,
+                        onTap: () => widget.onShowMarker(m),
+                      );
+                    },
+                  ),
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MarkerListTile extends StatelessWidget {
+  const _MarkerListTile({
+    required this.marker,
+    required this.distanceKm,
+    required this.onTap,
+  });
+  final MapMarker marker;
+  final double distanceKm;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
+    final tagEmoji = marker.tags.isNotEmpty
+        ? _kTags
+            .firstWhere((t) => t.$2 == marker.tags.first,
+                orElse: () => ('🏷️', marker.tags.first))
+            .$1
+        : null;
+
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Icon
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: _MarkerIcon(
+                type: marker.type,
+                creatorLevel: marker.creatorLevel,
+                tags: marker.tags,
+              ),
+            ),
+            const SizedBox(width: 12),
+
+            // Content
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Text
+                  Text(
+                    marker.text,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 4),
+                  // Meta row
+                  Row(
+                    children: [
+                      Text(
+                        marker.creatorNickname,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontFamily: 'monospace',
+                          color: cs.primary.withValues(alpha: 0.8),
+                        ),
+                      ),
+                      Text(
+                        '  ·  ${_distLabel(distanceKm)}  ·  ${_timeAgo(marker.createdAt)}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontFamily: 'monospace',
+                          color: cs.onSurface.withValues(alpha: 0.4),
+                        ),
+                      ),
+                    ],
+                  ),
+                  // Tags
+                  if (marker.tags.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 4,
+                      children: marker.tags.map((tag) {
+                        final emoji = _kTags
+                            .firstWhere((t) => t.$2 == tag,
+                                orElse: () => ('🏷️', tag))
+                            .$1;
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: cs.primary.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                                color: cs.primary.withValues(alpha: 0.2)),
+                          ),
+                          child: Text(
+                            '$emoji $tag',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontFamily: 'monospace',
+                              color: cs.primary.withValues(alpha: 0.7),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+
+            // Thumbnail (if image)
+            if (marker.imageUrl != null) ...[
+              const SizedBox(width: 10),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: Image.network(
+                  marker.imageUrl!,
+                  width: 52,
+                  height: 52,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    width: 52, height: 52,
+                    color: cs.surfaceContainerHighest,
+                    child: Icon(Icons.broken_image_outlined,
+                        size: 18, color: cs.onSurfaceVariant),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }
