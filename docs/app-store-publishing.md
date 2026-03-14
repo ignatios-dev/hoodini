@@ -61,3 +61,16 @@ Jederzeit möglich:
   konditionalen Import (`image_picker_stub.dart`). Muss vor Phase 2 getestet werden.
 - Supabase Deep Link / OAuth Redirect braucht native URL-Schemes (`supabase_flutter` Config).
 - Datenschutzerklärung (URL) ist für beide Stores Pflicht.
+
+---
+
+## Geplante Features (Backlog)
+
+### Direkte Kamera-Aufnahme beim Marker erstellen
+Statt Bild aus der Galerie wählen → direkt Kamera öffnen.
+
+**Web:** `<input type="file" accept="image/*" capture="environment">` — öffnet direkt die Rückkamera.
+**Native (Phase 2+):** `image_picker` Plugin mit `ImageSource.camera`.
+
+Implementierung: eigener "Kamera"-Button neben "Galerie"-Button im Create-Sheet.
+Aufwand: ~2h, sinnvoll ab Phase 2 (native App).

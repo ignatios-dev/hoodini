@@ -824,14 +824,41 @@ class _CreateMarkerSheetState extends ConsumerState<_CreateMarkerSheet> {
                           ),
                         ],
                       )
-                    : OutlinedButton.icon(
-                        onPressed: _pickImage,
-                        icon: const Icon(Icons.add_photo_alternate_outlined),
-                        label: const Text('ADD IMAGE'),
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          OutlinedButton.icon(
+                            onPressed: _pickImage,
+                            icon: const Icon(Icons.add_photo_alternate_outlined),
+                            label: const Text('ADD IMAGE'),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'JPG/PNG · wird automatisch komprimiert',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontFamily: 'monospace',
+                              color: cs.onSurface.withValues(alpha: 0.35),
+                            ),
+                          ),
+                        ],
                       ),
               ),
             ],
           ),
+          if (_imageBytes != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 4, bottom: 4),
+              child: Text(
+                '📎 ${(_imageBytes!.length / 1024).toStringAsFixed(0)} KB',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontFamily: 'monospace',
+                  color: cs.primary,
+                ),
+              ),
+            ),
           const SizedBox(height: 12),
           if (_uploadStatus.isNotEmpty)
             Padding(
@@ -872,6 +899,48 @@ class _CreateMarkerSheetState extends ConsumerState<_CreateMarkerSheet> {
       ),
     );
   }
+}
+
+void _showFullscreenImage(BuildContext context, String url) {
+  showDialog<void>(
+    context: context,
+    barrierColor: Colors.black87,
+    builder: (ctx) => GestureDetector(
+      onTap: () => Navigator.of(ctx).pop(),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Stack(
+          children: [
+            Center(
+              child: InteractiveViewer(
+                child: Image.network(
+                  url,
+                  fit: BoxFit.contain,
+                  loadingBuilder: (c, child, progress) => progress == null
+                      ? child
+                      : const Center(child: CircularProgressIndicator()),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 40, right: 16,
+              child: GestureDetector(
+                onTap: () => Navigator.of(ctx).pop(),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: const BoxDecoration(
+                    color: Colors.black54,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.close, color: Colors.white, size: 20),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 class _MarkerDetailSheet extends ConsumerWidget {
@@ -924,53 +993,70 @@ class _MarkerDetailSheet extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           if (marker.imageUrl != null) ...[
-            Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Text(
-                'img: ${marker.imageUrl}',
-                style: TextStyle(
-                  fontSize: 9,
-                  fontFamily: 'monospace',
-                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                marker.imageUrl!,
-                width: double.infinity,
-                height: 200,
-                fit: BoxFit.cover,
-                loadingBuilder: (ctx, child, progress) => progress == null
-                    ? child
-                    : Container(
-                        height: 200,
-                        color: theme.colorScheme.surfaceContainerHighest,
-                        child: const Center(child: CircularProgressIndicator()),
+            GestureDetector(
+              onTap: () => _showFullscreenImage(context, marker.imageUrl!),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Stack(
+                  children: [
+                    Image.network(
+                      marker.imageUrl!,
+                      width: double.infinity,
+                      height: 180,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (ctx, child, progress) => progress == null
+                          ? child
+                          : Container(
+                              height: 180,
+                              color: theme.colorScheme.surfaceContainerHighest,
+                              child: const Center(child: CircularProgressIndicator()),
+                            ),
+                      errorBuilder: (ctx, err, st) => Container(
+                        height: 100,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.errorContainer.withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                              color: theme.colorScheme.error.withValues(alpha: 0.4)),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.broken_image_outlined,
+                                color: theme.colorScheme.error, size: 28),
+                            const SizedBox(height: 6),
+                            Text('Bild konnte nicht geladen werden',
+                                style: TextStyle(
+                                    color: theme.colorScheme.error,
+                                    fontSize: 12,
+                                    fontFamily: 'monospace')),
+                          ],
+                        ),
                       ),
-                errorBuilder: (ctx, err, st) => Container(
-                  height: 100,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.errorContainer.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: theme.colorScheme.error.withValues(alpha: 0.4)),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.broken_image_outlined,
-                          color: theme.colorScheme.error, size: 28),
-                      const SizedBox(height: 6),
-                      Text('Bild konnte nicht geladen werden',
-                          style: TextStyle(
-                              color: theme.colorScheme.error,
-                              fontSize: 12,
-                              fontFamily: 'monospace')),
-                    ],
-                  ),
+                    ),
+                    Positioned(
+                      bottom: 6, right: 6,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: Colors.black54,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.fullscreen, color: Colors.white, size: 14),
+                            SizedBox(width: 3),
+                            Text('Tippen für Vollbild',
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontFamily: 'monospace')),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
