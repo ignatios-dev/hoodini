@@ -634,6 +634,7 @@ class _CreateMarkerSheetState extends ConsumerState<_CreateMarkerSheet> {
   Uint8List? _imageBytes;
   String? _imageExt;
   bool _uploading = false;
+  String _uploadStatus = '';
 
   @override
   void dispose() {
@@ -652,24 +653,32 @@ class _CreateMarkerSheetState extends ConsumerState<_CreateMarkerSheet> {
 
   Future<void> _submit() async {
     if (_textController.text.trim().isEmpty) return;
-    setState(() => _uploading = true);
+    setState(() { _uploading = true; _uploadStatus = ''; });
 
     String? imageUrl;
     if (_imageBytes != null && _imageExt != null) {
+      setState(() => _uploadStatus = 'uploading image...');
       final uploadResult = await SupabaseStorageRepository().uploadImage(
         bytes: _imageBytes!,
         extension: _imageExt!,
       );
       if (uploadResult.isErr) {
         if (mounted) {
+          setState(() { _uploading = false; _uploadStatus = ''; });
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Image upload failed: ${uploadResult.errorOrNull}')),
+            SnackBar(
+              content: Text('Upload fehlgeschlagen: ${uploadResult.errorOrNull}'),
+              duration: const Duration(seconds: 6),
+              backgroundColor: Colors.red[900],
+            ),
           );
         }
-        setState(() => _uploading = false);
         return;
       }
       imageUrl = uploadResult.valueOrNull;
+      setState(() => _uploadStatus = 'saving marker...');
+    } else {
+      setState(() => _uploadStatus = 'saving...');
     }
 
     final result = await ref.read(markerNotifierProvider.notifier).createMarker(
@@ -817,6 +826,31 @@ class _CreateMarkerSheetState extends ConsumerState<_CreateMarkerSheet> {
             ],
           ),
           const SizedBox(height: 12),
+          if (_uploadStatus.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 12, height: 12,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: cs.primary,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    _uploadStatus,
+                    style: TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 11,
+                      color: cs.primary,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           FilledButton(
             onPressed: _uploading ? null : _submit,
             child: _uploading
@@ -898,17 +932,24 @@ class _MarkerDetailSheet extends ConsumerWidget {
                         child: const Center(child: CircularProgressIndicator()),
                       ),
                 errorBuilder: (ctx, err, st) => Container(
-                  height: 80,
+                  height: 100,
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerHighest,
+                    color: theme.colorScheme.errorContainer.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: theme.colorScheme.error.withValues(alpha: 0.4)),
                   ),
-                  child: Center(
-                    child: Text('image unavailable',
-                        style: TextStyle(
-                            color: theme.colorScheme.onSurfaceVariant,
-                            fontSize: 12,
-                            fontFamily: 'monospace')),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.broken_image_outlined,
+                          color: theme.colorScheme.error, size: 28),
+                      const SizedBox(height: 6),
+                      Text('Bild konnte nicht geladen werden',
+                          style: TextStyle(
+                              color: theme.colorScheme.error,
+                              fontSize: 12,
+                              fontFamily: 'monospace')),
+                    ],
                   ),
                 ),
               ),
