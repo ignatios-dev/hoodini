@@ -3,6 +3,11 @@ insert into storage.buckets (id, name, public)
 values ('marker-images', 'marker-images', true)
 on conflict (id) do nothing;
 
+-- Drop existing policies if they exist (idempotent)
+drop policy if exists "Users can upload marker images" on storage.objects;
+drop policy if exists "Public read on marker images" on storage.objects;
+drop policy if exists "Users can delete own marker images" on storage.objects;
+
 -- Allow any authenticated user (incl. anon) to upload
 create policy "Users can upload marker images"
   on storage.objects for insert
