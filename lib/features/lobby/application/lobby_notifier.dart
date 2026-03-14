@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -30,15 +31,22 @@ class LobbyNotifier extends AsyncNotifier<Lobby?> {
   @override
   Future<Lobby?> build() async {
     _repo = SupabaseLobbyRepository();
+
+    // Watch auth — if auth is still loading on startup, this notifier will
+    // automatically rebuild once auth finishes (ref.read would miss that).
+    final player = ref.watch(authNotifierProvider).valueOrNull;
+    if (player == null) return null;
+
     final prefs = await SharedPreferences.getInstance();
     final lobbyId = prefs.getString(AppConstants.prefCurrentLobbyId);
     if (lobbyId == null) return null;
-    final player = ref.read(authNotifierProvider).valueOrNull;
-    if (player == null) return null;
+
+    debugPrint('[Lobby] restoring lobby $lobbyId for player ${player.id}');
     final result = await _repo.joinLobby(
       lobbyId: lobbyId,
       userId: player.id,
     );
+    if (result.isErr) debugPrint('[Lobby] restore failed: ${result.errorOrNull}');
     return result.valueOrNull;
   }
 
