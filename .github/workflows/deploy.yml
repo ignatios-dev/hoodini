@@ -33,6 +33,5 @@ jobs:
       - name: Deploy to Vercel
         run: |
           npm install -g vercel@latest
-          DEPLOYMENT=$(vercel deploy --prebuilt --yes --token=${{ secrets.VERCEL_TOKEN }} 2>&1 | tail -1)
+          DEPLOYMENT=$(vercel deploy --prebuilt --prod --yes --token=${{ secrets.VERCEL_TOKEN }} 2>&1 | grep -E '^https://' | tail -1)
           echo "Deployed to: $DEPLOYMENT"
-          vercel alias set "$DEPLOYMENT" hoodini.vercel.app --token=${{ secrets.VERCEL_TOKEN }}
