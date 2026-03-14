@@ -643,8 +643,13 @@ class _CreateMarkerSheetState extends ConsumerState<_CreateMarkerSheet> {
   }
 
   Future<void> _pickImage() async {
+    debugPrint('[Marker] picking image...');
     final picked = await pickImageFromDevice();
-    if (picked == null) return;
+    if (picked == null) {
+      debugPrint('[Marker] image pick cancelled');
+      return;
+    }
+    debugPrint('[Marker] picked: ext=${picked.$2} bytes=${picked.$1.length}');
     setState(() {
       _imageBytes = picked.$1;
       _imageExt = picked.$2;
@@ -676,11 +681,13 @@ class _CreateMarkerSheetState extends ConsumerState<_CreateMarkerSheet> {
         return;
       }
       imageUrl = uploadResult.valueOrNull;
+      debugPrint('[Marker] imageUrl to save: $imageUrl');
       setState(() => _uploadStatus = 'saving marker...');
     } else {
       setState(() => _uploadStatus = 'saving...');
     }
 
+    debugPrint('[Marker] createMarker with imageUrl=$imageUrl');
     final result = await ref.read(markerNotifierProvider.notifier).createMarker(
           lat: widget.position.latitude,
           lng: widget.position.longitude,
@@ -917,6 +924,19 @@ class _MarkerDetailSheet extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           if (marker.imageUrl != null) ...[
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Text(
+                'img: ${marker.imageUrl}',
+                style: TextStyle(
+                  fontSize: 9,
+                  fontFamily: 'monospace',
+                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: Image.network(
