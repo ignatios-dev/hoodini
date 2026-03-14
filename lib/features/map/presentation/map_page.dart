@@ -656,13 +656,6 @@ class _MarkerListTile extends StatelessWidget {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
-    final tagEmoji = marker.tags.isNotEmpty
-        ? _kTags
-            .firstWhere((t) => t.$2 == marker.tags.first,
-                orElse: () => ('🏷️', marker.tags.first))
-            .$1
-        : null;
-
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -1489,11 +1482,12 @@ class _MarkerDetailSheet extends ConsumerWidget {
     );
   }
 
-  String _timeAgo(DateTime dt) {
-    final diff = DateTime.now().difference(dt);
-    if (diff.inSeconds < 60) return 'just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
-    return '${diff.inDays}d ago';
-  }
+}
+
+String _timeAgo(DateTime dt) {
+  final diff = DateTime.now().difference(dt);
+  if (diff.inSeconds < 60) return 'just now';
+  if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+  if (diff.inHours < 24) return '${diff.inHours}h ago';
+  return '${diff.inDays}d ago';
 }
