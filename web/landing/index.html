@@ -379,6 +379,165 @@
     }
 
     footer span { color: var(--gold); }
+
+    /* ── INSTALL ── */
+    .install {
+      padding: 80px 24px;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .install-card {
+      background: var(--surface);
+      border: 1px solid #222;
+      border-radius: 16px;
+      padding: 40px 36px;
+    }
+
+    .install-card h2 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      font-family: 'Courier New', monospace;
+      color: var(--gold);
+      margin-bottom: 8px;
+    }
+
+    .install-card .sub {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 32px;
+      text-align: left;
+      max-width: none;
+    }
+
+    .install-platforms {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 560px) {
+      .install-platforms { grid-template-columns: 1fr; }
+    }
+
+    .install-platform {
+      background: var(--surface2);
+      border: 1px solid #2a2a2a;
+      border-radius: 12px;
+      padding: 24px 20px;
+    }
+
+    .install-platform .os {
+      font-family: 'Courier New', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 3px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .install-platform ol {
+      padding-left: 0;
+      list-style: none;
+      counter-reset: steps;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .install-platform ol li {
+      counter-increment: steps;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      font-size: 0.88rem;
+      color: #bbb;
+      line-height: 1.5;
+    }
+
+    .install-platform ol li::before {
+      content: counter(steps);
+      font-family: 'Courier New', monospace;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--gold);
+      background: rgba(255,215,0,0.08);
+      border: 1px solid rgba(255,215,0,0.2);
+      border-radius: 4px;
+      width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .install-platform .icon-hint {
+      display: inline-block;
+      background: #333;
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: 0.8rem;
+    }
+
+    /* ── APP STORE TEASER ── */
+    .appstore {
+      padding: 0 24px 80px;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .appstore-card {
+      background: var(--surface);
+      border: 1px solid #222;
+      border-radius: 16px;
+      padding: 32px 36px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    @media (max-width: 560px) {
+      .appstore-card { flex-direction: column; align-items: flex-start; }
+    }
+
+    .appstore-icons {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+      font-size: 2.2rem;
+    }
+
+    .appstore-text .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,215,0,0.07);
+      border: 1px solid rgba(255,215,0,0.2);
+      border-radius: 20px;
+      padding: 3px 12px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 2px;
+      color: var(--gold);
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .appstore-text h3 {
+      font-family: 'Courier New', monospace;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .appstore-text p {
+      font-size: 0.88rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
   </style>
 </head>
 <body>
@@ -474,6 +633,55 @@
           <h3>Crew einladen</h3>
           <p>Lobby-Link kopieren, verschicken, fertig. Alle sehen die gleichen Marker in Echtzeit.</p>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── INSTALL ── -->
+  <section class="install" id="install">
+    <div class="install-card">
+      <h2>App auf dem Handy installieren</h2>
+      <p class="sub">Hoodini läuft direkt im Browser — kein App Store nötig. Füge sie als Shortcut zum Homescreen hinzu und nutze sie wie eine native App.</p>
+
+      <div class="install-platforms">
+
+        <!-- iOS -->
+        <div class="install-platform">
+          <p class="os"> iOS / Safari</p>
+          <ol>
+            <li>Öffne <strong>hoodini.vercel.app</strong> in Safari</li>
+            <li>Tippe auf das Teilen-Symbol <span class="icon-hint">⎋</span> unten in der Menüleiste</li>
+            <li>Wähle <strong>„Zum Home-Bildschirm"</strong></li>
+            <li>Namen bestätigen und <strong>„Hinzufügen"</strong> tippen</li>
+          </ol>
+        </div>
+
+        <!-- Android -->
+        <div class="install-platform">
+          <p class="os"> Android / Chrome</p>
+          <ol>
+            <li>Öffne <strong>hoodini.vercel.app</strong> in Chrome</li>
+            <li>Tippe auf das Menü <span class="icon-hint">⋮</span> oben rechts</li>
+            <li>Wähle <strong>„App installieren"</strong> oder <strong>„Zum Startbildschirm"</strong></li>
+            <li>Bestätigen — fertig</li>
+          </ol>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── APP STORE TEASER ── -->
+  <section class="appstore">
+    <div class="appstore-card">
+      <div class="appstore-icons">
+        <span>🍎</span>
+        <span>🤖</span>
+      </div>
+      <div class="appstore-text">
+        <div class="badge">⏳ COMING SOON</div>
+        <h3>Bald im App Store &amp; Google Play</h3>
+        <p>Native Apps für iOS und Android sind in Arbeit. Bis dahin einfach als Web-App auf dem Homescreen installieren — voller Funktionsumfang, kein Download nötig.</p>
       </div>
     </div>
   </section>
