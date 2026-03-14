@@ -18,7 +18,9 @@ class MarkerNotifier extends AsyncNotifier<List<MapMarker>> {
     final lobby = ref.watch(lobbyNotifierProvider).valueOrNull;
     if (lobby == null) return [];
 
+    debugPrint('[Markers] loading for lobby ${lobby.id} (${lobby.name})');
     final markers = await _repo.getMarkersForLobby(lobby.id);
+    debugPrint('[Markers] loaded ${markers.length} markers');
     _subscribeRealtime(lobby.id);
 
     ref.onDispose(() {
@@ -30,15 +32,20 @@ class MarkerNotifier extends AsyncNotifier<List<MapMarker>> {
 
   void _subscribeRealtime(String lobbyId) {
     _channel?.unsubscribe();
+    debugPrint('[Realtime] subscribing to markers for lobby $lobbyId');
     _channel = _repo.subscribeToMarkers(
       lobbyId: lobbyId,
       onInsert: (marker) {
+        debugPrint('[Realtime] INSERT marker ${marker.id} by ${marker.creatorNickname}');
         final current = state.valueOrNull ?? [];
-        // Avoid duplicate if we created it locally
-        if (current.any((m) => m.id == marker.id)) return;
+        if (current.any((m) => m.id == marker.id)) {
+          debugPrint('[Realtime] dedup — marker already in state');
+          return;
+        }
         state = AsyncData([marker, ...current]);
       },
       onDelete: (markerId) {
+        debugPrint('[Realtime] DELETE marker $markerId');
         final current = state.valueOrNull ?? [];
         state = AsyncData(current.where((m) => m.id != markerId).toList());
       },

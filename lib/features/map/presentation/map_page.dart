@@ -644,16 +644,27 @@ class _CreateMarkerSheetState extends ConsumerState<_CreateMarkerSheet> {
 
   Future<void> _pickImage() async {
     debugPrint('[Marker] picking image...');
-    final picked = await pickImageFromDevice();
-    if (picked == null) {
-      debugPrint('[Marker] image pick cancelled');
-      return;
+    try {
+      final picked = await pickImageFromDevice();
+      if (picked == null) {
+        debugPrint('[Marker] image pick cancelled');
+        return;
+      }
+      debugPrint('[Marker] picked: ext=${picked.$2} bytes=${picked.$1.length}');
+      setState(() {
+        _imageBytes = picked.$1;
+        _imageExt = picked.$2;
+      });
+    } catch (e) {
+      debugPrint('[Marker] pick error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(e.toString()),
+          duration: const Duration(seconds: 5),
+          backgroundColor: Colors.red[900],
+        ));
+      }
     }
-    debugPrint('[Marker] picked: ext=${picked.$2} bytes=${picked.$1.length}');
-    setState(() {
-      _imageBytes = picked.$1;
-      _imageExt = picked.$2;
-    });
   }
 
   Future<void> _submit() async {
@@ -1011,28 +1022,33 @@ class _MarkerDetailSheet extends ConsumerWidget {
                               color: theme.colorScheme.surfaceContainerHighest,
                               child: const Center(child: CircularProgressIndicator()),
                             ),
-                      errorBuilder: (ctx, err, st) => Container(
-                        height: 100,
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.errorContainer.withValues(alpha: 0.3),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                              color: theme.colorScheme.error.withValues(alpha: 0.4)),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.broken_image_outlined,
-                                color: theme.colorScheme.error, size: 28),
-                            const SizedBox(height: 6),
-                            Text('Bild konnte nicht geladen werden',
-                                style: TextStyle(
-                                    color: theme.colorScheme.error,
-                                    fontSize: 12,
-                                    fontFamily: 'monospace')),
-                          ],
-                        ),
-                      ),
+                      errorBuilder: (ctx, err, st) {
+                        debugPrint('[Image] load error for ${marker.imageUrl}: $err');
+                        return Container(
+                          height: 100,
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.errorContainer
+                                .withValues(alpha: 0.3),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                                color: theme.colorScheme.error
+                                    .withValues(alpha: 0.4)),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.broken_image_outlined,
+                                  color: theme.colorScheme.error, size: 28),
+                              const SizedBox(height: 6),
+                              Text('Bild konnte nicht geladen werden',
+                                  style: TextStyle(
+                                      color: theme.colorScheme.error,
+                                      fontSize: 12,
+                                      fontFamily: 'monospace')),
+                            ],
+                          ),
+                        );
+                      },
                     ),
                     Positioned(
                       bottom: 6, right: 6,

@@ -60,37 +60,34 @@ class SupabaseMarkerRepository {
     required void Function(MapMarker marker) onInsert,
     required void Function(String markerId) onDelete,
   }) {
+    // No server-side filter — UUID filters in Supabase Realtime Postgres
+    // Changes are unreliable. Filter client-side instead.
     return _client
         .channel('markers:$lobbyId')
         .onPostgresChanges(
           event: PostgresChangeEvent.insert,
           schema: 'public',
           table: 'markers',
-          filter: PostgresChangeFilter(
-            type: PostgresChangeFilterType.eq,
-            column: 'lobby_id',
-            value: lobbyId,
-          ),
           callback: (payload) {
-            final marker = _markerFromJson(payload.newRecord);
-            onInsert(marker);
+            debugPrint('[Realtime] raw INSERT: ${payload.newRecord['id']} lobby=${payload.newRecord['lobby_id']}');
+            final record = payload.newRecord;
+            if (record['lobby_id'] != lobbyId) return;
+            onInsert(_markerFromJson(record));
           },
         )
         .onPostgresChanges(
           event: PostgresChangeEvent.delete,
           schema: 'public',
           table: 'markers',
-          filter: PostgresChangeFilter(
-            type: PostgresChangeFilterType.eq,
-            column: 'lobby_id',
-            value: lobbyId,
-          ),
           callback: (payload) {
             final id = payload.oldRecord['id'] as String?;
+            debugPrint('[Realtime] raw DELETE: $id');
             if (id != null) onDelete(id);
           },
         )
-        .subscribe();
+        .subscribe((status, error) {
+          debugPrint('[Realtime] status=$status error=$error');
+        });
   }
 
   MapMarker _markerFromJson(Map<String, dynamic> json) => MapMarker(
